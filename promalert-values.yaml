@@ -1,0 +1,38 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: myapp-alerts
+  namespace: default
+  labels:
+    release: monitoring
+    app: myapp
+spec:
+  groups:
+    - name: myapp.rules
+      rules:
+        - alert: MyAppTargetDown
+          expr: up{job="node-api"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "myapp target down ({{ $labels.instance }})"
+            description: "Prometheus has not been able to scrape {{ $labels.instance }} for more than 2 minutes."
+
+        - alert: MyAppPodRestartingFrequently
+          expr: increase(kube_pod_container_status_restarts_total{namespace="default", pod=~"myapp-.*"}[15m]) > 3
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "myapp pod restarting frequently ({{ $labels.pod }})"
+            description: "{{ $labels.pod }} has restarted more than 3 times in the last 15 minutes."
+
+        - alert: MyAppReplicasMismatch
+          expr: kube_deployment_status_replicas_available{deployment="myapp", namespace="default"} < kube_deployment_spec_replicas{deployment="myapp", namespace="default"}
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "myapp has fewer available replicas than desired"
+            description: "Deployment myapp has {{ $value }} available replicas, below the desired count."

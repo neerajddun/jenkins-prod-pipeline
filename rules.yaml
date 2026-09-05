@@ -1,0 +1,58 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: myapp-alerts
+  namespace: default
+  labels:
+    release: monitoring # required so kube-prometheus-stack picks this up
+    app: my-app
+spec:
+  groups:
+    - name: myapp.rules
+      rules:
+        # Alert if the target itself is unreachable
+        - alert: MyAppTargetDown
+          expr: up{job="node-api"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "myapp target down ({{ $labels.instance }})"
+            description: "Prometheus has not been able to scrape {{ $labels.instance }} for more than 2 minutes."
+
+        # Alert if any pod in the Deployment restarts repeatedly (crash loop)
+        - alert: MyAppPodRestartingFrequently
+          expr: increase(kube_pod_container_status_restarts_total{namespace="default", pod=~"my-app-.*"}[15m]) > 3
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "myapp pod restarting frequently ({{ $labels.pod }})"
+            description: "{{ $labels.pod }} has restarted more than 3 times in the last 15 minutes."
+
+        # Alert if fewer than desired replicas are available
+        - alert: MyAppReplicasMismatch
+          expr: kube_deployment_status_replicas_available{deployment="my-app", namespace="default"} < kube_deployment_spec_replicas{deployment="my-app", namespace="default"}
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "myapp has fewer available replicas than desired"
+            description: "Deployment my-app has {{ $value }} available replicas, below the desired count."
+
+        # --- Optional: fill these in once you check what /metrics actually exposes ---
+        # - alert: MyAppHighErrorRate
+        #   expr: rate(flask_http_request_exceptions_total{job="node-api"}[5m]) > 0.05
+        #   for: 5m
+        #   labels:
+        #     severity: warning
+        #   annotations:
+        #     summary: "High error rate on myapp"
+        #
+        # - alert: MyAppHighLatency
+        #   expr: histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket{job="node-api"}[5m])) > 1
+        #   for: 5m
+        #   labels:
+        #     severity: warning
+        #   annotations:
+        #     summary: "95th percentile latency above 1s on myapp"
