@@ -60,7 +60,9 @@ pipeline {
                 failure {
 
                     echo "Deployment failed - myapp is failing on deployment"
-
+                    withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws-creds', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')])
+                    { 
+                        
                     sh '''
 
                     aws eks update-kubeconfig --name test-cluster --region ap-southeast-1
@@ -68,6 +70,7 @@ pipeline {
                     kubectl rollout status deployment myapp --timeout-5m
 
                     '''
+                    }
                 }
             }
         }
