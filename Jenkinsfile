@@ -54,11 +54,7 @@ pipeline {
 
                 success {
                     
-                    withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws-creds', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')])
-                    { 
                     echo "Deployment succeeded - myapp is healty and roll out"
-                    sh "kubectl set image deployment myapp myapp=neeraj91/prometheus-app:nonexistent"
-                   }
                 }
 
                 failure {
