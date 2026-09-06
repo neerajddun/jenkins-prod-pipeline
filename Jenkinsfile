@@ -44,7 +44,6 @@ pipeline {
                 
                 aws eks update-kubeconfig --name test-cluster --region ap-southeast-1
                 envsubst < deployment.yaml | kubectl apply -f - 
-                kubectl apply -f service.yaml
                 kubectl rollout status deployment myapp --timeout=5m
 
                 '''
