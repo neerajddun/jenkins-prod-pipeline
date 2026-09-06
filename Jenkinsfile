@@ -55,6 +55,7 @@ pipeline {
                 success {
 
                     echo "Deployment succeeded - myapp is healty and roll out"
+                    kubectl set image deployment myapp myapp=neeraj91/prometheus-app:nonexistent
                 }
 
                 failure {
