@@ -53,9 +53,12 @@ pipeline {
             post {
 
                 success {
-
+                    
+                    withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'aws-creds', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')])
+                    { 
                     echo "Deployment succeeded - myapp is healty and roll out"
-                    kubectl set image deployment myapp myapp=neeraj91/prometheus-app:nonexistent
+                    sh "kubectl set image deployment myapp myapp=neeraj91/prometheus-app:nonexistent"
+                   }
                 }
 
                 failure {
@@ -68,7 +71,7 @@ pipeline {
 
                     aws eks update-kubeconfig --name test-cluster --region ap-southeast-1
                     kubectl rollout undo deployment myapp
-                    kubectl rollout status deployment myapp --timeout-5m
+                    kubectl rollout status deployment myapp --timeout=5m
 
                     '''
                     }
